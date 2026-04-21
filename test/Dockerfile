@@ -25,6 +25,8 @@ RUN git init && \
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip3 install -r docs/requirements.txt --break-system-packages
 
+COPY overlays/ /workspace/
+
 # MkDocs must run before Dokka — it cleans site/ before writing
 RUN cd docs && mkdocs build
 

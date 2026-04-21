@@ -57,10 +57,20 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout docs.viaduct.dev (overlays)
+        uses: actions/checkout@v6
+        with:
+          path: deploy
+
+      - name: Checkout airbnb/viaduct (source)
+        uses: actions/checkout@v6
         with:
           repository: airbnb/viaduct
           ref: main
+          path: source
+
+      - name: Apply overlays
+        run: cp -r deploy/overlays/. source/
 
       - uses: actions/setup-java@v5
         with:
@@ -73,23 +83,24 @@ jobs:
         with:
           python-version: '3.x'
           cache: pip
-          cache-dependency-path: docs/requirements.txt
+          cache-dependency-path: source/docs/requirements.txt
 
       - name: Install Python deps
-        run: pip install -r docs/requirements.txt
+        run: pip install -r source/docs/requirements.txt
 
       - name: Build MkDocs
-        working-directory: docs
+        working-directory: source/docs
         run: mkdocs build
         # MkDocs cleans site/ before writing — must run before Dokka
 
       - name: Generate Dokka
+        working-directory: source
         run: ./gradlew :core:tenant:tenant-api:dokkaGenerate :core:service:dokkaGenerate
 
       - uses: actions/upload-artifact@v7
         with:
           name: site
-          path: docs/site
+          path: source/docs/site
 
   link-check:
     needs: [check-upstream, build]
