@@ -10,12 +10,13 @@ Every build follows the same steps, whether local or CI:
 
 1. Clone `airbnb/viaduct` at a specific ref
 2. Apply **overlays** from this repo over the cloned source
-3. Flatten the `docs/` subdirectory so content is served at clean URLs (e.g. `/developers/` not `/docs/developers/`)
-4. Remove non-docs content (about, blog, community, roadmap) so it is never built or indexed
-5. Run `mkdocs build` to generate the static site
-6. Run Gradle to generate Dokka API references (`/apis/tenant-api/` and `/apis/service/`)
-7. Check links with lychee
-8. Serve (locally) or deploy to GitHub Pages (CI)
+3. Run `patch-mkdocs.py` to generate the nav dynamically from the upstream and append it to the overlay `mkdocs.yml`
+4. Flatten the `docs/` subdirectory so content is served at clean URLs (e.g. `/developers/` not `/docs/developers/`)
+5. Remove non-docs content (about, blog, community, roadmap) so it is never built or indexed
+6. Run `mkdocs build` to generate the static site
+7. Run Gradle to generate Dokka API references (`/apis/tenant-api/` and `/apis/service/`)
+8. Check links with lychee
+9. Serve (locally) or deploy to GitHub Pages (CI)
 
 ## Overlays
 
@@ -23,26 +24,26 @@ The `overlays/` directory mirrors the upstream file tree. Any file placed here i
 
 ```
 overlays/
+  patch-mkdocs.py           # generates nav dynamically from upstream
   docs/
-    mkdocs.yml              # nav restructure, site_url, plugin config
+    mkdocs.yml              # site_url, plugin config, extra — no nav
     docs/
       index.md              # docs.viaduct.dev root landing page
       kdocs/
         index.md            # KDocs landing page (links to both API references)
 ```
 
-**To change the nav, site config, or plugins:** edit `overlays/docs/mkdocs.yml`.
+**To change site config or plugins:** edit `overlays/docs/mkdocs.yml`.
 
-**To add or change a page that exists in the upstream:** create a file at the matching path under `overlays/`. It will replace the upstream file at build time.
+**To add or change a page that exists in the upstream:** create a file at the matching path under `overlays/docs/`. It will replace the upstream file at build time.
 
-**To add a new page with no upstream equivalent:** create it under `overlays/` and add it to the nav in `overlays/docs/mkdocs.yml`.
+**To add a new page with no upstream equivalent:** create it under `overlays/docs/` and it will appear in the nav automatically on the next build (as long as the upstream nav includes the section it belongs to).
 
-**Nav maintenance:** the nav in the overlay mkdocs.yml is a full replacement of the upstream nav. When `airbnb/viaduct` adds a new page and nav entry, the overlay nav must be updated to include it — otherwise the page builds and is accessible by URL but won't appear in the sidebar. The weekly CI run will surface missing pages as MkDocs warnings.
+**Nav generation:** `patch-mkdocs.py` reads the upstream `docs/mkdocs.yml` via git, extracts the Documentation section (Getting Started, Developers, Service Engineers, Contributors), fixes paths to match the flatten step, appends the KDocs section, and writes the nav into the overlay `mkdocs.yml` before the build. The nav tracks upstream automatically — no manual updates needed when new pages are added to `airbnb/viaduct`.
 
 **Things the overlay mkdocs.yml controls:**
 - `site_url` — driven by `SITE_URL` env var (set per environment)
 - `extra.homepage` — logo links back to `viaduct.airbnb.tech`
-- Nav — restructured to Getting Started / Developers / Service Engineers / Contributors / KDocs tabs
 - Blog plugin removed (blog content is deleted from the build)
 
 ## Local testing
@@ -88,7 +89,7 @@ The deploy workflow (`.github/workflows/deploy-docs.yml`) runs on:
 - **Weekly schedule** — checks the latest `airbnb/viaduct` SHA; skips if already built for that SHA
 - **Manual trigger** — use the **Deploy Docs** workflow from the Actions tab
 
-The pipeline: checkout this repo → checkout `airbnb/viaduct` → apply overlays → flatten → remove non-docs → build → link check → deploy to GitHub Pages.
+The pipeline: checkout this repo → checkout `airbnb/viaduct` → apply overlays → generate nav → flatten → remove non-docs → build → link check → deploy to GitHub Pages.
 
 The upstream SHA cache uses GitHub Actions cache to avoid redundant weekly builds. A push to `main` in this repo always bypasses the cache and deploys unconditionally.
 

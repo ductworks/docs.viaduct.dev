@@ -27,6 +27,9 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 
 COPY overlays/ /workspace/
 
+# Generate nav dynamically from upstream mkdocs.yml and append to overlay
+RUN python3 patch-mkdocs.py
+
 # Flatten docs/docs/docs/{developers,service_engineers,contributors} up one level
 # so they build at /developers/, /service_engineers/, /contributors/ instead of /docs/*/
 RUN cp -rn docs/docs/docs/developers docs/docs/docs/service_engineers docs/docs/docs/contributors docs/docs/
