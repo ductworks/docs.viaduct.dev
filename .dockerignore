@@ -1,0 +1,5 @@
+.git
+.github
+test/docker-compose.yml
+test/lychee.toml
+README.md
