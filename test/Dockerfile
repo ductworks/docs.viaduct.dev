@@ -36,7 +36,7 @@ RUN --mount=type=cache,target=/root/.gradle \
 # ── Stage 2: Static file server ───────────────────────────────────────────────
 FROM golang:1.23-alpine AS server-builder
 WORKDIR /build
-COPY server.go .
+COPY test/server.go .
 RUN go mod init server && \
     CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o server .
 
