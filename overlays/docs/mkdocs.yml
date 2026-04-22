@@ -53,7 +53,6 @@ hooks:
 
 extra_css:
   - stylesheets/brand.css
-  - stylesheets/viaduct-dev.css
   - kdoc-service-styles.css
   - kdoc-styles.css
 
