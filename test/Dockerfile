@@ -31,6 +31,9 @@ COPY overlays/ /workspace/
 # so they build at /developers/, /service_engineers/, /contributors/ instead of /docs/*/
 RUN cp -rn docs/docs/docs/developers docs/docs/docs/service_engineers docs/docs/docs/contributors docs/docs/
 
+# Remove non-docs content so it is never built or indexed by search
+RUN rm -rf docs/docs/about docs/docs/roadmap docs/docs/community docs/docs/blog
+
 # MkDocs must run before Dokka — it cleans site/ before writing
 RUN cd docs && mkdocs build
 

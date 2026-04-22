@@ -92,6 +92,10 @@ jobs:
         working-directory: source
         run: cp -rn docs/docs/docs/developers docs/docs/docs/service_engineers docs/docs/docs/contributors docs/docs/
 
+      - name: Remove non-docs content
+        working-directory: source
+        run: rm -rf docs/docs/about docs/docs/roadmap docs/docs/community docs/docs/blog
+
       - name: Build MkDocs
         working-directory: source/docs
         run: mkdocs build

@@ -61,8 +61,6 @@ extra_javascript:
 
 plugins:
   - search
-  - blog:
-      blog_dir: blog
   - macros:
       module_name: plugins/code_snippets
       on_error_fail: true
