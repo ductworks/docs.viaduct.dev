@@ -88,6 +88,10 @@ jobs:
       - name: Install Python deps
         run: pip install -r source/docs/requirements.txt
 
+      - name: Flatten docs/ subdirectory
+        working-directory: source
+        run: cp -rn docs/docs/docs/developers docs/docs/docs/service_engineers docs/docs/docs/contributors docs/docs/
+
       - name: Build MkDocs
         working-directory: source/docs
         run: mkdocs build

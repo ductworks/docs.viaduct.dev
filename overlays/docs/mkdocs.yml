@@ -131,39 +131,39 @@ nav:
             - Viaduct Builder: getting_started/starwars/architecture/viaduct_builder.md
     - Extending: getting_started/extending/index.md
   - Developers:
-    - docs/developers/index.md
+    - developers/index.md
     - Resolvers:
-      - docs/developers/resolvers/index.md
-      - Resolver Annotation: docs/developers/resolvers/resolver_annotation.md
-      - Node Resolvers: docs/developers/resolvers/node_resolvers.md
-      - Field Resolvers: docs/developers/resolvers/field_resolvers.md
-      - Batch Resolution: docs/developers/resolvers/batch_resolution.md
-      - Mutations: docs/developers/resolvers/mutations.md
-      - Node References: docs/developers/resolvers/node_references.md
-      - Subqueries: docs/developers/resolvers/subqueries.md
-    - Generated Code: docs/developers/generated_code/index.md
-    - Global IDs: docs/developers/globalids/index.md
-    - Pagination: docs/developers/pagination/index.md
+      - developers/resolvers/index.md
+      - Resolver Annotation: developers/resolvers/resolver_annotation.md
+      - Node Resolvers: developers/resolvers/node_resolvers.md
+      - Field Resolvers: developers/resolvers/field_resolvers.md
+      - Batch Resolution: developers/resolvers/batch_resolution.md
+      - Mutations: developers/resolvers/mutations.md
+      - Node References: developers/resolvers/node_references.md
+      - Subqueries: developers/resolvers/subqueries.md
+    - Generated Code: developers/generated_code/index.md
+    - Global IDs: developers/globalids/index.md
+    - Pagination: developers/pagination/index.md
     - Api Stability:
-      - docs/developers/api_stability/index.md
-      - Contributors guide: docs/developers/api_stability/contributors_guide.md
-    - Scopes: docs/developers/scopes/index.md
-    - Schema Reference: docs/developers/schema_reference/index.md
-    - Serve: docs/developers/serve/index.md
-    - Viaduct Api: docs/developers/viaduct_api/index.md
-    - Testing: docs/developers/testing/index.md
+      - developers/api_stability/index.md
+      - Contributors guide: developers/api_stability/contributors_guide.md
+    - Scopes: developers/scopes/index.md
+    - Schema Reference: developers/schema_reference/index.md
+    - Serve: developers/serve/index.md
+    - Viaduct Api: developers/viaduct_api/index.md
+    - Testing: developers/testing/index.md
   - Service Engineers:
-    - docs/service_engineers/index.md
-    - Schema Extensions: docs/service_engineers/schema_extensions/index.md
-    - Multi-tenancy: docs/service_engineers/multi_tenancy/index.md
+    - service_engineers/index.md
+    - Schema Extensions: service_engineers/schema_extensions/index.md
+    - Multi-tenancy: service_engineers/multi_tenancy/index.md
     - Observability:
-      - docs/service_engineers/observability/index.md
-      - Error Handling: docs/service_engineers/observability/error_handling.md
-      - Setup: docs/service_engineers/observability/setup.md
+      - service_engineers/observability/index.md
+      - Error Handling: service_engineers/observability/error_handling.md
+      - Setup: service_engineers/observability/setup.md
   - Contributors:
-    - docs/contributors/index.md
-    - Architecture: docs/contributors/architecture/index.md
-    - IDE Testing: docs/contributors/ide_testing/index.md
+    - contributors/index.md
+    - Architecture: contributors/architecture/index.md
+    - IDE Testing: contributors/ide_testing/index.md
   - KDocs:
     - kdocs/index.md
     - Tenant API: 'https://docs.viaduct.dev/apis/tenant-api/'

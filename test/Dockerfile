@@ -27,6 +27,10 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 
 COPY overlays/ /workspace/
 
+# Flatten docs/docs/docs/{developers,service_engineers,contributors} up one level
+# so they build at /developers/, /service_engineers/, /contributors/ instead of /docs/*/
+RUN cp -rn docs/docs/docs/developers docs/docs/docs/service_engineers docs/docs/docs/contributors docs/docs/
+
 # MkDocs must run before Dokka — it cleans site/ before writing
 RUN cd docs && mkdocs build
 
