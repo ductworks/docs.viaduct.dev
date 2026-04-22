@@ -37,6 +37,8 @@ overlays/
 
 **To add a new page with no upstream equivalent:** create it under `overlays/` and add it to the nav in `overlays/docs/mkdocs.yml`.
 
+**Nav maintenance:** the nav in the overlay mkdocs.yml is a full replacement of the upstream nav. When `airbnb/viaduct` adds a new page and nav entry, the overlay nav must be updated to include it — otherwise the page builds and is accessible by URL but won't appear in the sidebar. The weekly CI run will surface missing pages as MkDocs warnings.
+
 **Things the overlay mkdocs.yml controls:**
 - `site_url` — driven by `SITE_URL` env var (set per environment)
 - `extra.homepage` — logo links back to `viaduct.airbnb.tech`
