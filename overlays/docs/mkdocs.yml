@@ -93,7 +93,6 @@ markdown_extensions:
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
 nav:
-  - index.md
   - Getting Started:
     - getting_started/index.md
     - Setup:
