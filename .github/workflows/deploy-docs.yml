@@ -109,7 +109,7 @@ jobs:
         working-directory: source
         run: ./gradlew :core:tenant:tenant-api:dokkaGenerate :core:service:dokkaGenerate --no-daemon
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: site
           path: source/docs/site
@@ -123,7 +123,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6  # needed for lychee.toml
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: site
           path: site
@@ -156,7 +156,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: site
           path: site
@@ -164,7 +164,7 @@ jobs:
       - name: Write CNAME
         run: echo "${SITE_URL#https://}" > site/CNAME
 
-      - uses: actions/upload-pages-artifact@v4
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: site
 

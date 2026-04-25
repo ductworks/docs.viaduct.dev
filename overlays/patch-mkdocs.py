@@ -11,7 +11,7 @@ Also promotes the Getting Started index page to the site root (index.md)
 so that docs.viaduct.dev/ serves the Getting Started landing page directly.
 """
 import os
-import shutil
+import re
 import subprocess
 import sys
 import yaml
@@ -144,11 +144,38 @@ for item in nav:
         gs_path = gs_index_path(item['Getting Started'])
         break
 
+# Inline markdown link URLs: (url) or (url "title") or (url 'title')
+_LINK_RE = re.compile(r'\(([^\s)]+)((?:\s+"[^"]*"|\s+\'[^\']*\')?)\)')
+
+def _prefix_relative_links(content, prefix):
+    """Prepend prefix/ to every relative link URL in markdown content.
+
+    Leaves absolute URLs (http/https), root-relative paths (/…),
+    anchors (#…), and mailto: links untouched.
+    """
+    def _fix(m):
+        url, title = m.group(1), m.group(2)
+        if re.match(r'^(?:https?://|/|#|mailto:)', url):
+            return m.group(0)
+        return f'({prefix}/{url}{title})'
+    return _LINK_RE.sub(_fix, content)
+
 if gs_path and gs_path != 'index.md':
     src = f'docs/docs/{gs_path}'
     dst = 'docs/docs/index.md'
     if os.path.exists(src):
-        shutil.copy2(src, dst)
+        with open(src) as f:
+            content = f.read()
+        gs_dir = os.path.dirname(gs_path)
+        if gs_dir:
+            # Relative links in the original file resolve correctly from its
+            # subdirectory. Once the file is moved to the root those same links
+            # would point to non-existent paths, breaking MkDocs resolution and
+            # producing .md hrefs in the output. Prefix them with the source
+            # directory so MkDocs can still find the targets.
+            content = _prefix_relative_links(content, gs_dir)
+        with open(dst, 'w') as f:
+            f.write(content)
         nav, remapped = remap_first(nav, gs_path, 'index.md')
         if remapped:
             print(f"patch-mkdocs.py: promoted {gs_path} -> index.md")
