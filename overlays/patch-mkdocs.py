@@ -3,9 +3,9 @@
 Append a dynamically generated nav to docs/mkdocs.yml.
 
 Reads the upstream nav via git (before overlays replaced mkdocs.yml),
-extracts the Documentation section children, fixes paths flattened by
-the build, appends the KDocs section, and writes nav YAML to the end
-of the already-applied overlay mkdocs.yml.
+picks the sections we publish, fixes paths flattened by the build,
+appends the KDocs section, and writes nav YAML to the end of the
+already-applied overlay mkdocs.yml.
 """
 import subprocess
 import sys
@@ -28,17 +28,23 @@ PermissiveLoader.add_multi_constructor('', _unknown)
 raw = subprocess.check_output(['git', 'show', 'HEAD:docs/mkdocs.yml']).decode()
 upstream = yaml.load(raw, Loader=PermissiveLoader)
 
-# Extract Documentation section children we want at the top level
-KEEP = {'Getting Started', 'Developers', 'Service Engineers', 'Contributors'}
+KEEP = {'Home', 'Getting Started', 'Developers', 'Service Engineers', 'Contributors'}
+STRIP = {'About', 'Roadmap', 'Blog', 'Community'}
+
 doc_nav = []
 for item in upstream.get('nav', []):
-    if isinstance(item, dict) and 'Documentation' in item:
-        for sub in item['Documentation']:
-            if isinstance(sub, dict) and next(iter(sub)) in KEEP:
-                doc_nav.append(sub)
+    if isinstance(item, str):
+        doc_nav.append(item)
+    elif isinstance(item, dict):
+        key = next(iter(item))
+        if key in KEEP:
+            doc_nav.append(item)
+        elif key not in STRIP:
+            print(f"patch-mkdocs.py: ERROR — unknown upstream nav section '{key}'; add it to KEEP or STRIP", file=sys.stderr)
+            sys.exit(1)
 
 if not doc_nav:
-    print("patch-mkdocs.py: ERROR — no Documentation section found in upstream nav", file=sys.stderr)
+    print("patch-mkdocs.py: ERROR — no matching nav sections found in upstream nav", file=sys.stderr)
     sys.exit(1)
 
 # Fix paths to match the flatten step:

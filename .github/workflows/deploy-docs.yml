@@ -107,7 +107,7 @@ jobs:
 
       - name: Generate Dokka
         working-directory: source
-        run: ./gradlew :core:tenant:tenant-api:dokkaGenerate :core:service:dokkaGenerate --no-daemon
+        run: ./gradlew :core:tenant:api:dokkaGenerate :core:service:dokkaGenerate --no-daemon
 
       - uses: actions/upload-artifact@v7
         with:

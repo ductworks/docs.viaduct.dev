@@ -7,4 +7,9 @@ exclude = [
     "https://(www\\.)?linkedin\\.com",
     "https://(www\\.)?twitter\\.com",
     "https://x\\.com",
+    # Upstream landing page links to sections we strip from the build
+    "/about/$",
+    "/roadmap/$",
+    # site_url renders as localhost in local builds; unreachable from linkcheck container
+    "http://localhost",
 ]

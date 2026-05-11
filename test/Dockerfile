@@ -41,7 +41,7 @@ RUN rm -rf docs/docs/about docs/docs/roadmap docs/docs/community docs/docs/blog
 RUN cd docs && mkdocs build
 
 RUN --mount=type=cache,target=/root/.gradle \
-    ./gradlew :core:tenant:tenant-api:dokkaGenerate :core:service:dokkaGenerate --no-daemon --max-workers=2 --quiet
+    ./gradlew :core:tenant:api:dokkaGenerate :core:service:dokkaGenerate --no-daemon --max-workers=2 --quiet
 
 # ── Stage 2: Static file server ───────────────────────────────────────────────
 FROM golang:1.23-alpine AS server-builder
