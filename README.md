@@ -1,104 +1,71 @@
 # docs.viaduct.dev
 
-This repo builds and deploys [docs.viaduct.dev](https://docs.viaduct.dev) — the public documentation site for [Viaduct](https://github.com/airbnb/viaduct).
+Builds and deploys [docs.viaduct.dev](https://docs.viaduct.dev) from [airbnb/viaduct](https://github.com/airbnb/viaduct). **No content lives here** -- this repo only controls build, deployment, and the thin config layer on top of the upstream source.
 
-[airbnb/viaduct](https://github.com/airbnb/viaduct) is the source of truth. **No content changes are made here.** This repo controls the build, deployment, and presentation-layer customizations applied on top of the upstream source.
-
-## How it works
-
-Every build follows the same steps, whether local or CI:
-
-1. Clone `airbnb/viaduct` at a specific ref
-2. Apply **overlays** from this repo over the cloned source
-3. Run `patch-mkdocs.py` to generate the nav from the upstream, promote the Getting Started landing page to the site root, and append everything to the overlay `mkdocs.yml`
-4. Flatten the `docs/` subdirectory so content is served at clean URLs (e.g. `/developers/` not `/docs/developers/`)
-5. Remove non-docs content (about, blog, community, roadmap) so it is never built or indexed
-6. Run `mkdocs build` to generate the static site
-7. Run Gradle to generate Dokka API references (`/apis/tenant-api/` and `/apis/service/`)
-8. Check links with lychee
-9. Serve (locally) or deploy to GitHub Pages (CI)
-
-## Overlays
-
-The `overlays/` directory mirrors the upstream file tree. Any file placed here is copied over the upstream checkout before the build runs, replacing the upstream version.
+## Repo structure
 
 ```
 overlays/
-  patch-mkdocs.py           # generates nav and promotes Getting Started to root
+  patch-mkdocs.py             # generates nav from upstream, writes to override config
   docs/
-    mkdocs.yml              # site_url, plugin config, extra — no nav
-    docs/
-      index.md              # placeholder — overwritten at build time (see below)
-      kdocs/
-        index.md            # KDocs landing page (links to both API references)
+    mkdocs-override.yml       # INHERIT-based config (site_url, plugins, homepage)
+test/
+  Dockerfile                  # full build pipeline (MkDocs + Dokka)
+  docker-compose.yml          # local dev server + link checker
+  server.go                   # minimal static file server for the container
+  lychee.toml                 # link checker exclusions
+.github/workflows/
+  deploy-docs.yml             # build + deploy to GitHub Pages
+  lint.yml                    # ruff on patch-mkdocs.py
 ```
 
-**To change site config or plugins:** edit `overlays/docs/mkdocs.yml`.
+## How it works
 
-**To add or change a page that exists in the upstream:** create a file at the matching path under `overlays/docs/`. It will replace the upstream file at build time.
+1. Clone `airbnb/viaduct` at a given ref
+2. Copy `overlays/` on top of the clone
+3. `patch-mkdocs.py` reads the upstream `docs/mkdocs.yml` nav, keeps sections in `KEEP`, rejects anything not in `KEEP` or `STRIP` (build fails on unknown sections), fixes paths for the flatten step, and appends the nav to `mkdocs-override.yml`
+4. Flatten `docs/docs/docs/` up one level so content serves at `/developers/` not `/docs/developers/`; copy the upstream docs landing page to `index.md`
+5. Strip non-docs content (about, blog, community, roadmap)
+6. `mkdocs build -f mkdocs-override.yml`
+7. Dokka generates API references at `/apis/tenant-api/` and `/apis/service/`
 
-**To add a new page with no upstream equivalent:** create it under `overlays/docs/` and it will appear in the nav automatically on the next build (as long as the upstream nav includes the section it belongs to).
+## Config: mkdocs-override.yml
 
-**Nav generation:** `patch-mkdocs.py` reads the upstream `docs/mkdocs.yml` via git, extracts the Documentation section (Getting Started, Developers, Service Engineers, Contributors), fixes paths to match the flatten step, appends the KDocs section, and writes the nav into the overlay `mkdocs.yml` before the build. The nav tracks upstream automatically — no manual updates needed when new pages are added to `airbnb/viaduct`.
+Uses MkDocs [`INHERIT`](https://www.mkdocs.org/user-guide/configuration/#configuration-inheritance) to extend the upstream `mkdocs.yml`. We only override what differs:
 
-**Root page:** `patch-mkdocs.py` promotes the Getting Started landing page to the site root. It finds the Getting Started section's index file in the upstream nav, copies it to `docs/docs/index.md`, and remaps the nav entry to point to `index.md`. As a result, `docs.viaduct.dev/` serves the Getting Started content directly and the Getting Started nav link resolves to `/`. The `overlays/docs/docs/index.md` file is a build-time placeholder that is always overwritten by this step.
+- `site_url` -- `https://docs.viaduct.dev` instead of the upstream domain
+- `plugins` -- drops the `blog` plugin (we strip blog content)
+- `extra.homepage` -- logo links to `https://viaduct.airbnb.tech/`
+
+Everything else (theme, hooks, extensions, CSS, analytics) flows through from upstream automatically.
+
+## Nav parity check
+
+`patch-mkdocs.py` has two sets: `KEEP` (sections we publish) and `STRIP` (sections we intentionally exclude). If upstream adds a new top-level nav section that isn't in either set, the build fails:
+
+```
+patch-mkdocs.py: ERROR -- unknown upstream nav section 'Changelog'; add it to KEEP or STRIP
+```
+
+Edit the sets in `patch-mkdocs.py` to resolve.
 
 ## Local testing
 
-Requires Docker. Builds and serves the site at `http://localhost:8080`:
-
-```bash
-cd test && docker compose up --build
-```
-
-To build from a specific upstream branch, tag, or commit SHA:
+See [test/README.md](test/README.md) for details. Quick start:
 
 ```bash
 cd test
-SOURCE_REF=v0.28.0 docker compose up --build      # tag
-SOURCE_REF=main docker compose up --build         # branch
-SOURCE_REF=abc1234ef docker compose up --build    # commit SHA
+docker compose build
+docker compose up                                            # http://localhost:8080
+docker compose --profile linkcheck run --rm linkcheck        # check links
 ```
-
-The local build runs the full pipeline: clone, overlay, flatten, delete non-docs, mkdocs build, Dokka. What you see at `localhost:8080` is exactly what deploys to production.
-
-## Link checking
-
-Links are checked with [lychee](https://github.com/lycheeverse/lychee). Exclusions (domains that block bots) are configured in `test/lychee.toml`.
-
-Run the link checker against a running local container:
-
-```bash
-cd test
-docker compose up --build                                # terminal 1
-docker compose --profile linkcheck run --rm linkcheck    # terminal 2
-```
-
-In CI, lychee runs automatically after the build and before deployment. A broken link fails the deployment.
-
-To add a link exclusion (e.g. a domain that returns 403 to bots), add a pattern to `test/lychee.toml`.
 
 ## CI / deployment
 
-Two workflows run in CI:
+**`deploy-docs.yml`** runs on pushes to `main` (when `overlays/`, `test/`, or the workflow itself changes), weekly (skips if upstream hasn't changed), and manual dispatch. Pipeline: build, link check, deploy to GitHub Pages.
 
-**`.github/workflows/lint.yml`** — runs on every push. Checks `overlays/patch-mkdocs.py` with [ruff](https://github.com/astral-sh/ruff).
-
-**`.github/workflows/deploy-docs.yml`** — runs on:
-
-- **Push to `main`** — always builds and deploys
-- **Weekly schedule** — checks the latest `airbnb/viaduct` SHA; skips if already built for that SHA
-- **Manual trigger** — use the **Deploy Docs** workflow from the Actions tab
-
-The pipeline: checkout this repo → checkout `airbnb/viaduct` → apply overlays → generate nav → flatten → remove non-docs → build → link check → deploy to GitHub Pages.
-
-The upstream SHA cache uses GitHub Actions cache to avoid redundant weekly builds. A push to `main` in this repo always bypasses the cache and deploys unconditionally.
+**`lint.yml`** runs on pushes that touch `*.py` files or the workflow itself.
 
 ## Switching domains
 
-`SITE_URL` is set in two places and must match:
-
-1. `.github/workflows/deploy-docs.yml` — used in CI builds and the CNAME written to the Pages artifact
-2. `test/Dockerfile` default ARG — used for local builds (`http://localhost:8080` by default; override with `SITE_URL=https://... docker compose up`)
-
-DNS and the GitHub Pages custom domain setting (repo Settings → Pages) also need updating when switching domains.
+Update `SITE_URL` in both `deploy-docs.yml` and `test/Dockerfile`, then update DNS and the GitHub Pages custom domain setting.

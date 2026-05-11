@@ -4,8 +4,7 @@ Append a dynamically generated nav to docs/mkdocs-override.yml.
 
 Reads the upstream nav from docs/mkdocs.yml (untouched by overlays),
 picks the sections we publish, fixes paths flattened by the build,
-appends the KDocs section, and writes nav YAML to the end of the
-INHERIT-based override config.
+and writes nav YAML to the INHERIT-based override config.
 """
 import sys
 import yaml
