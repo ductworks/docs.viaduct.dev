@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """
-Append a dynamically generated nav to docs/mkdocs.yml.
+Append a dynamically generated nav to docs/mkdocs-override.yml.
 
-Reads the upstream nav via git (before overlays replaced mkdocs.yml),
+Reads the upstream nav from docs/mkdocs.yml (untouched by overlays),
 picks the sections we publish, fixes paths flattened by the build,
 appends the KDocs section, and writes nav YAML to the end of the
-already-applied overlay mkdocs.yml.
+INHERIT-based override config.
 """
-import subprocess
 import sys
 import yaml
 
@@ -24,9 +23,9 @@ def _unknown(loader, tag_suffix, node):
 
 PermissiveLoader.add_multi_constructor('', _unknown)
 
-# Read upstream nav from git (pre-overlay version of mkdocs.yml)
-raw = subprocess.check_output(['git', 'show', 'HEAD:docs/mkdocs.yml']).decode()
-upstream = yaml.load(raw, Loader=PermissiveLoader)
+# Read upstream nav directly (INHERIT overlay leaves mkdocs.yml untouched)
+with open('docs/mkdocs.yml') as f:
+    upstream = yaml.load(f, Loader=PermissiveLoader)
 
 KEEP = {'Home', 'Getting Started', 'Developers', 'Service Engineers', 'Contributors'}
 STRIP = {'About', 'Roadmap', 'Blog', 'Community'}
@@ -74,15 +73,11 @@ def fix_nav(items):
             })
     return out
 
-nav = fix_nav(doc_nav) + [{'KDocs': [
-    'kdocs/index.md',
-    {'Tenant API': 'https://docs.viaduct.dev/apis/tenant-api/'},
-    {'Service API': 'https://docs.viaduct.dev/apis/service/'},
-]}]
+nav = fix_nav(doc_nav)
 
 nav_yaml = yaml.dump({'nav': nav}, default_flow_style=False, allow_unicode=True)
 
-with open('docs/mkdocs.yml', 'a') as f:
+with open('docs/mkdocs-override.yml', 'a') as f:
     f.write('\n')
     f.write(nav_yaml)
 

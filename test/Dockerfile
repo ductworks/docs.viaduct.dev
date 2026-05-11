@@ -1,7 +1,9 @@
 # syntax=docker/dockerfile:1
 
 # ── Stage 1: Build ────────────────────────────────────────────────────────────
+FROM eclipse-temurin:17-jdk-noble AS jdk17
 FROM eclipse-temurin:21-jdk-noble AS builder
+COPY --from=jdk17 /opt/java/openjdk /opt/java/17
 
 ARG SITE_URL=http://localhost:8080
 ARG SOURCE_REF=main
@@ -27,18 +29,19 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 
 COPY overlays/ /workspace/
 
-# Generate nav dynamically from upstream mkdocs.yml and append to overlay
+# Generate nav from upstream mkdocs.yml and append to override config
 RUN python3 patch-mkdocs.py
 
-# Flatten docs/docs/docs/{developers,service_engineers,contributors} up one level
-# so they build at /developers/, /service_engineers/, /contributors/ instead of /docs/*/
-RUN cp -rn docs/docs/docs/developers docs/docs/docs/service_engineers docs/docs/docs/contributors docs/docs/
+# Flatten docs/docs/docs/ up one level so content builds at the site root
+RUN cp -rn docs/docs/docs/developers docs/docs/docs/service_engineers docs/docs/docs/contributors docs/docs/ \
+    && cp docs/docs/docs/index.md docs/docs/index.md \
+    && sed -i 's|\.\./getting_started/|getting_started/|g' docs/docs/index.md
 
 # Remove non-docs content so it is never built or indexed by search
 RUN rm -rf docs/docs/about docs/docs/roadmap docs/docs/community docs/docs/blog
 
 # MkDocs must run before Dokka — it cleans site/ before writing
-RUN cd docs && mkdocs build
+RUN cd docs && mkdocs build -f mkdocs-override.yml
 
 RUN --mount=type=cache,target=/root/.gradle \
     ./gradlew :core:tenant:api:dokkaGenerate :core:service:dokkaGenerate --no-daemon --max-workers=2 --quiet

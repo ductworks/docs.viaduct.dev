@@ -92,13 +92,18 @@ jobs:
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: |
+            17
+            21
 
       - uses: gradle/actions/setup-gradle@v6
 
       - name: Flatten docs/ subdirectory
         working-directory: source
-        run: cp -rn docs/docs/docs/developers docs/docs/docs/service_engineers docs/docs/docs/contributors docs/docs/
+        run: |
+          cp -rn docs/docs/docs/developers docs/docs/docs/service_engineers docs/docs/docs/contributors docs/docs/
+          cp docs/docs/docs/index.md docs/docs/index.md
+          sed -i 's|\.\./getting_started/|getting_started/|g' docs/docs/index.md
 
       - name: Remove non-docs content
         working-directory: source
@@ -106,7 +111,7 @@ jobs:
 
       - name: Build MkDocs
         working-directory: source/docs
-        run: mkdocs build
+        run: mkdocs build -f mkdocs-override.yml
         # MkDocs cleans site/ before writing — must run before Dokka
 
       - name: Generate Dokka

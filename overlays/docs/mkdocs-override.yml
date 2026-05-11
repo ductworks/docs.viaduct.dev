@@ -1,0 +1,11 @@
+INHERIT: mkdocs.yml
+site_url: !ENV SITE_URL
+
+plugins:
+  - search
+  - macros:
+      module_name: plugins/code_snippets
+      on_error_fail: true
+
+extra:
+  homepage: https://viaduct.airbnb.tech/
